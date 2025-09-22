@@ -1,0 +1,215 @@
+---
+title: "Homework 2 Report"
+output: html_document
+---
+
+
+## Name
+
+Dana Nguyen
+
+### Setup
+
+Read in the data with `read_csv()` and store the data as an R object named `dataset`. Check the data to make sure all of the expected observations and variables are there.
+
+
+```{r}
+## Load the data and any necessary packages here.
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+
+dataset <- read_csv("maacs.csv.gz")
+
+```
+
+## Part 1
+
+We will first consider the relationship between FEV1 and age. In general, it is expected that as children get older (and hence, larger in size), their FEV1 values should get higher. 
+
+Consider the statement "FEV1 values in children are higher in older children relative to younger children". 
+
+Write a function in R that takes the `dataset` object as an argument and returns `TRUE` if the statement above is true for the dataset and `FALSE` otherwise. 
+
+NOTE: In order to write this function, you will need to translate the statement above into something that can be checked with the data. There are many ways in which you can do that translation correctly and you only need to pick one way here. 
+
+NOTE: For this part, do not use any plots.
+
+```{r}
+## Write your function here
+
+# Function that shows whether the older you get, does FEV1 values increase, return T/F
+
+increase_TF_function <- function(dataset){
+  model <- lm(fev1 ~ age, data = dataset)
+  slope <- model$coefficients[2]
+  if (slope > 0){
+    return(TRUE)
+  }
+  return(FALSE)
+}
+
+print(increase_TF_function(dataset))
+
+
+```
+
+
+## Part 2
+
+Fit a linear regression model with FEV1 as the outcome and age as a predictor.
+
+How much does FEV1 change for a 1-year increase in the child's age? 
+
+```{r}
+## Add your code here
+
+# Linear regression slope coefficient is the FEV1 change
+
+model <- lm(fev1 ~ age, data = dataset)
+model$coefficients[2] # displays the slope
+
+```
+
+
+Write your data analysis statement interpreting the regression model here:
+
+For a 1-year increase in the child's age, the expected difference is 0.1711 in the FEV1 value.
+
+## Part 3
+
+Develop **three** supporting premises derived from the data that support the statement you wrote in Part 2. These can be plots, other summary statistics, or model results. 
+
+NOTE: 
+
+* At least one supporting premise should use a plot.
+
+* Do not use the code you write in Part 1 as a supporting premise
+
+```{r}
+## Add your code here
+
+# Supporting premise two, calculating the mean between older vs. younger children
+
+median(dataset$age)
+
+older_val <- dataset |>
+  filter(age > 10.915) |>
+  select(age, fev1) |>
+  summarize(mean_val = mean(fev1, na.rm=TRUE))
+
+younger_val <- dataset |>
+  filter(age <= 10.915) |>
+  select(age, fev1) |>
+  summarize(mean_val = mean(fev1, na.rm=TRUE))
+  
+print(older_val)
+print(younger_val)
+
+```
+
+
+Write the three supporting premise statements here:
+
+1. The scatter plot of age and FEV1 values should display a positive linear relationship so that as age increases, so does FEV1 values. 
+
+2. The mean FEV1 value in older children is relatively larger than the mean FEV1 value of younger children. 
+
+3. Box plots across increasing ages demonstrate increasing medians for FEV1 values and the box plots are symmetric. 
+
+## Part 4
+
+For each of the supporting premises above, write a function that takes the `dataset` object as an argument and returns `TRUE` if the supporting premise statement above is true for the dataset and `FALSE` otherwise. 
+
+For statements involving plots, instead of returning `TRUE` or `FALSE`, you function should do two things:
+
+1. Produce the plot that is used in the statement
+
+2. Produce a hypothetical version of the plot in the event that the statement is true. This can be done using simulated data or by simply hand drawing a plot.
+
+
+```{r}
+## Function for supporting premise statement 1
+
+ggplot(dataset, aes(x=age, y=fev1)) +
+  geom_point(na.rm = TRUE) +
+  labs(title = "Actual Scatter Plot",
+       x = "Age",
+       y = "FEV1 Values")
+
+
+hypo_data <- tibble(
+  age = rnorm(150, mean = 10, sd = 2),
+  fev1 = 0.30 * age + rnorm(150, mean = 0, sd = 0.15)
+)
+
+ggplot(hypo_data, aes(x=age, y=fev1)) +
+  geom_point(na.rm = TRUE) +
+  labs(title = "Hypothetical Scatter Plot",
+       x = "Age",
+       y = "FEV1 Values")
+
+```
+
+
+```{r}
+## Function for supporting premise statement 2
+
+mean_TF_function <- function(dataset) {
+  older_val <- dataset |>
+  filter(age > median(dataset$age)) |>
+  select(age, fev1) |>
+  summarize(mean_val = mean(fev1, na.rm=TRUE))
+  younger_val <- dataset |>
+    filter(age <= median(dataset$age)) |>
+    select(age, fev1) |>
+    summarize(mean_val = mean(fev1, na.rm=TRUE))
+  if (older_val > younger_val){
+    return(TRUE)
+  }
+  return(FALSE)
+}
+
+mean_TF_function(dataset)
+
+```
+
+
+```{r}
+## Function for supporting premise statement 3
+data_age_bins <- dataset |>
+  mutate(age_bins = cut(age, breaks = 5)) # to create bins, grouping ages
+
+ggplot(data_age_bins, aes(x=factor(age_bins), y=fev1)) +
+  geom_boxplot(na.rm = TRUE) +
+  labs(title = "Actual Box Plot",
+       x = "Age",
+       y = "FEV1 Values")
+
+hypo_data_age_bins <- hypo_data |>
+  mutate(age_bins = cut(age, breaks = 5)) 
+
+ggplot(hypo_data_age_bins, aes(x=factor(age_bins), y=fev1)) +
+  geom_boxplot(na.rm = TRUE) +
+  labs(title = "Hypothetical Box Plot",
+       x = "Age",
+       y = "FEV1 Values") # Mostly symmetric
+
+
+
+
+```
+
+Execute each of your function and show that the produce the expected output.
+
+
+## Part 5
+
+Describe one alternative to the primary statement "FEV1 values in children are higher in older children relative to younger children". 
+- Alternative is FEV1 values in children are lower in older children relative to younger children
+
+Create a fault tree for the alternative outcome describing how the alternative outcome could be realized in the data even if the primary statement were true.
+
+Your fault tree should be created as a separate image and does not need to be created in R. Upload the image of the fault tree to Canvas.
+
+
