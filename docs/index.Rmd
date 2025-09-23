@@ -57,6 +57,7 @@ print(increase_TF_function(dataset))
 
 ```
 
+To check whether the statement "FEV1 values in children are higher in older children relative to younger children" is true, we looked at a function that returned True/False based on whether the linear regression slope was greater or less than zero. If the slope coefficient is greater than 0, it indicates that there is an expected increase in FEV1 values when there is an 1 year increase in the child's age. The function returned true, supporting that the statement is true.  
 
 ## Part 2
 
